@@ -197,9 +197,125 @@ Hier wurden gerade die Konfiguration und Data Nodes getrennt, wobei jede Managem
 
 ##### Raft Client-Server
 
+Es gibt auch eine traditionelle Client-Server Architektur mit einer skalierbaren multi-Raft Partitionsgruppe
 
+![image-20200303141146461](READMEassets/image-20200303141146461.png)
+
+Um Raft-based `primitives` gleichermaßen zu skalieren wie primary-based `primitives` (alle oberen), müssen wir einfach die Anzahl an Partitionen erhöhen. Hier ist eine Beispiel Konfiguration aus der Dokumentation die Nodes zu "Rafts" konfiguriert die mit einem Server vergleichbar sind.
+
+```python
+# The cluster configuration defines how nodes discover and communicate with one another
+cluster {
+  node {
+    id: ${atomix.node.id}   # Should be one of managementGroup.members
+    address: ${atomix.node.address}
+  }
+  multicast.enabled: true   # Enable multicast discovery
+  discovery.type: multicast # Configure the cluster membership to use multicast
+}
+
+# The management group coordinates higher level partition groups and is required
+# This node configures only a management group and no partition groups since it's
+# used only for partition/primitive management
+managementGroup {
+  type: raft # Use the Raft consensus protocol for system management
+  partitions: 1 # Use only a single partition
+  members: [raft-1, raft-2, raft-3] # Raft requires a static membership list
+  storage: {
+  	directory: ${atomix.raft.dir}
+  }
+}
+
+# Configure a Raft partition group named "raft"
+partitionGroups.raft {
+  type: raft # Use the Raft consensus protocol for this group
+  partitions: 7 # Configure the group with 7 partitions
+  members: [raft-1, raft-2, raft-3] # Raft requires a static membership list
+  storage: {
+  	directory: ${atomix.raft.data.dir}
+  }
+}
+```
+
+Jetzt können sich Stateless Clients zu den Rafts verbinden um `primitives` bearbeiten zu können. Da diese Clients simple Nodes sein können, müssen wir keine aufwendige Konfiguration vornehmen.
+
+```python
+# The cluster configuration defines how nodes discover and communicate with one another
+cluster {
+  node {
+    id: ${atomix.node.id}   # Must not be any one of managementGroup.members
+    address: ${atomix.node.address}
+  }
+  multicast.enabled: true   # Enable multicast discovery
+  discovery.type: multicast # Configure the cluster membership to use multicast
+}
+
+# Partition groups will be discovered from other nodes
+```
+
+Diese Client Nodes werden die Raft Nodes entdecken und dadurch sich dynamisch eine Partitionsgruppe aneignen. Dank dem ``MultiRaftProtocol` können diese Clients nun multi-Raft based `primitives` erzeugen. Hier ist eine Beispiel in Java, in dem genau das umgesetzt wird.
+
+```java
+Map<String, String> map = atomix.mapBuilder("my-map")
+  .withProtocol(MultiRaftProtocol.builder()
+    .withReadConsistency(ReadConsistency.SEQUENTIAL)
+    .withCommunicationStrategy(CommunicationStrategy.FOLLOWER)
+    .build())
+  .build();
+
+map.put("foo", "bar");
+```
+
+Dieser erzeugte `primitive` wird nun zwischen den konfigurierten Rafts verteilt.
+
+##### Consistent Data-Grid Client-Server
+
+Da es keine Limitierungen bei der Anzahl an Partitionen gibt, können mehrere Replikations-Protokolle in einer einzelnen Architektur vereint werden.
+
+![image-20200303142810791](READMEassets/image-20200303142810791.png)
+
+Diese Konfiguration kann sogar auf einer einzelnen Node konfiguriert werden.
+
+```python
+# The cluster configuration defines how nodes discover and communicate with one another
+cluster {
+  multicast.enabled: true   # Enable multicast discovery
+  discovery.type: multicast # Configure the cluster membership to use multicast
+}
+
+# The management group coordinates higher level partition groups and is required
+managementGroup {
+  type: raft # Use the Raft consensus protocol for system management
+  partitions: 1 # Use only a single partition
+  members: [raft-1, raft-2, raft-3] # Raft requires a static membership list
+}
+
+# Configure a primary-backup group named "data"
+partitionGroups.data {
+  type: primary-backup # Use the primary-backup protocol
+  partitions: 71       # Use 71 partitions for scalability
+  memberGroupStrategy: RACK_AWARE # Replicate partitions across physical racks
+}
+
+# Configure a Raft partition group named "raft"
+partitionGroups.raft {
+  type: raft # Use the Raft consensus protocol for this group
+  partitions: 7 # Configure the group with 7 partitions
+  members: [raft-1, raft-2, raft-3] # Raft requires a static membership list
+}
+```
+
+##### REST Client-Server
+
+Stateless Clients können auch als Atomix Agent als Proxy für Atomix `primitives`verwendet werden.
+
+![image-20200303143258711](READMEassets/image-20200303143258711.png)
+
+Durch das starten von Agents auf jedem Client Node, ist cross-language Verwendung von Atomix `primitives` möglich. Weiters ist durch die 1-zu-1 Beziehung zwischen Agent und Client eine maximale Konsistenz gegeben.
 
 #### Einsetzbare Programmiersprachen
+
+
 
 #### Datenverteilung und gemeinsamer Speicher
 
