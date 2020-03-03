@@ -315,7 +315,50 @@ Durch das starten von Agents auf jedem Client Node, ist cross-language Verwendun
 
 #### Einsetzbare Programmiersprachen
 
+Atomix ist ein reaktives Java Framework und kann mit Maven einfach deployed werden.
 
+```xml
+<dependencies>
+  <dependency>
+    <groupId>io.atomix</groupId>
+    <artifactId>atomix</artifactId>
+    <version>3.1.0-beta2</version>
+  </dependency>
+</dependencies>
+```
+
+#### Datenverteilung und gemeinsamer Speicher
+
+Atomix verteilt wie oben bereits erwähnt Daten zwischen mehreren Nodes je nach Architektur. Dabei wird von den "Backup" Nodes der physische Speicher in weitere Cluster unterteilt
+
+#### Performance bei Main-Focus
+
+#### Notifikation von Master oder anderen Slaves
+
+In Atomix gibt es je nach Architektur unterschiedliche Kommunikation zwischen Nodes
+
++ Data-Grid
+  + Alle Nodes kommunizieren mit ihren "benachbarten" Nodes wenn Veränderungen auftreten
++ Consistent Data-Grid
+  + Es gibt Rafts die sozusagen die Master-Rolle übernehmen um die Konsistenz der Backup Nodes zu überwachen und regeln.
++ Raft Client-Server
+  + Clients verbinden sich zu den Rafts und können nur `primitives` die zwischen den Rafts verteilt liegen bearbeiten. Bei Veränderungen kommunizieren hier nur die Rafts miteinander was die Fehlerquote zum Data-Grid deutlich verringert.
++ Consistent Data-Grid Client-Server
+  + Hier werden die beiden gerade erwähnten Technologien kombiniert um die Fehlerquote des Data-Grids zu minimieren und trotzdem die Konsistenz mit Netzwerk Partitionen zu ermöglichen. Es kommuniziert nur ein Client mit allen Nodes die Backup und Partition Managemnet untereinander ausmachen
++ REST Client-Server
+  + Ermöglicht cross-language Verwendung von Atomix primitives indem ein Atomix Agent als REST-Schnittstelle fungiert.
+
+### Apache Spark
+
+#### Architektur
+
+![image-20200303151515368](READMEassets/image-20200303151515368.png)
+
+Spark hat eine genau definierte layer-based Architektur in der alle Spark Komponenten und Layer lose gekoppelt sind.
+
+#### Einsetzbare Programmiersprachen
+
+Apache Spark kann verwendet werden um Applikationen in Java, Scala, Python, R und SQL zu bauen.
 
 #### Datenverteilung und gemeinsamer Speicher
 
