@@ -414,3 +414,17 @@ Sparks Rechenzeit ist um ein 100-Faches schneller als sein Konkurrent Apache Had
 #### Notifikation von Master oder anderen Slaves
 
 Master Node hat den `Spark Context`, welcher alles steuert. Jeder Auftrag der ausgeführt wird läuft über diesen `Spark Context`. Zusätzlich gibt es den `cluster manager` der die vom `Spark Context` gestartete Tasks auf mehrere Nodes im Cluster aufteilt. `Worker Nodes` sind die Slave Nodes. Sie führen die Tasks aus und liefern das Ergebnis zurück an den `Spark Context`.
+
+---
+
+---
+
+## Umsetzung
+
+### Spark
+
+#### Master starten
+
+![image-20200402150722794](READMEassets/image-20200402150722794.png)
+
+#### Worker starten
