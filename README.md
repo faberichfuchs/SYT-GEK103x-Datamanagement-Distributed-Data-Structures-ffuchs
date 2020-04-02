@@ -333,6 +333,8 @@ Atomix verteilt wie oben bereits erwähnt Daten zwischen mehreren Nodes je nach 
 
 #### Performance bei Main-Focus
 
+Aus der Dokumentation konnte ich keine Informationen zur Performance finden, auch bei kurzer Research im Internet bin ich auf keine klare Antwort gestoßen.
+
 #### Notifikation von Master oder anderen Slaves
 
 In Atomix gibt es je nach Architektur unterschiedliche Kommunikation zwischen Nodes
@@ -352,16 +354,63 @@ In Atomix gibt es je nach Architektur unterschiedliche Kommunikation zwischen No
 
 #### Architektur
 
-![image-20200303151515368](READMEassets/image-20200303151515368.png)
+ ![image-20200310104153519](READMEassets/image-20200310104153519.png)
 
-Spark hat eine genau definierte layer-based Architektur in der alle Spark Komponenten und Layer lose gekoppelt sind.
+
+
+Spark hat eine genau definierte layer-based Architektur in der alle Spark Komponenten und Layer lose gekoppelt sind. Spark hat einige native Komponenten, die auch als Spark Eco-System bezeichnet werden.
+
+![image-20200310110416554](READMEassets/image-20200310110416554.png)
+
+1. **Spark Core**
+
+   Spark Core is the base engine for large-scale parallel and distributed data processing. Further, additional libraries which are built on the top of the core allows diverse workloads for streaming, SQL, and machine learning. It is responsible for memory management and fault recovery, scheduling, distributing and monitoring jobs on a cluster & interacting with storage systems.
+
+2. **Spark Streaming**
+
+   Spark Streaming is the component of Spark which is used to process real-time streaming data. Thus, it is a useful addition to the core Spark API. It enables high-throughput and fault-tolerant stream processing of live data streams.
+
+3. **Spark SQL**
+
+   Spark SQL is a new module in Spark which integrates relational processing with Spark’s functional programming API. It supports querying data either via SQL or via the Hive Query Language. For those of you familiar with RDBMS, Spark SQL will be an easy transition from your earlier tools where you can extend the boundaries of traditional relational data processing.
+
+4. **GraphX**
+
+   GraphX is the Spark API for graphs and graph-parallel computation. Thus, it extends the Spark RDD with a Resilient Distributed Property Graph. At a high-level, GraphX extends the Spark RDD abstraction by introducing the Resilient Distributed Property Graph (a directed multigraph with properties attached to each vertex and edge).
+
+5. **MLlib (Machine Learning)**
+   MLlib stands for Machine Learning Library. Spark MLlib is used to perform machine learning in Apache Spark.
+
+6. **SparkR**
+
+   It is an R package that provides a distributed data frame implementation. It also supports operations like selection, filtering, aggregation but on large data-sets.
+
+Die Apache Spark Architektur ist auf 2 Hauptabstraktionen aufgebaut:
+
++ Resilient Distributed Dataset (RDD)
++ Directed Acyclic Graph (DAG)
+
+##### RDD
+
+![image-20200331105908130](READMEassets/image-20200331105908130.png)
+
+Durch RDD werden Daten in Chunks mit einem zugehörigen Key aufgespalten und auf vielen Nodes repliziert. Dadurch ist eine Ausfallsicherheit garantiert und es kann die Performance durch die Aufteilung von Tasks auf mehrere Nodes beschleunigt werden. RDDs können zwei Operationen durchführen:
+
+* Transformations: erstellen neue RDDs (Replikation, ...)
+* Actions: Lösen den Workflow aus und liefern einen Output
 
 #### Einsetzbare Programmiersprachen
 
-Apache Spark kann verwendet werden um Applikationen in Java, Scala, Python, R und SQL zu bauen.
+Apache Spark bietet viele APIs an. Spark Code kann in Java, Python, Scala und R geschrieben werden, wobei für Scala und Python sogar jeweils eine Shell zur Verfügung gestellt werden.
 
 #### Datenverteilung und gemeinsamer Speicher
 
+Daten werden auf RDDs im Cluster aufgeteilt. Daten werden dabei in Chunks aufgeteilt die auf einem Key basieren. Dadurch kann im Falle eines Ausfalls einer Node eine andere die Daten sofort stattdessen verarbeiten.
+
 #### Performance bei Main-Focus
 
+Sparks Rechenzeit ist um ein 100-Faches schneller als sein Konkurrent Apache Hadoop. Weiters ermöglicht Sparks DAG Performance Tuning was für eine zusätzliche Performance Verbesserung sorgt.
+
 #### Notifikation von Master oder anderen Slaves
+
+Master Node hat den `Spark Context`, welcher alles steuert. Jeder Auftrag der ausgeführt wird läuft über diesen `Spark Context`. Zusätzlich gibt es den `cluster manager` der die vom `Spark Context` gestartete Tasks auf mehrere Nodes im Cluster aufteilt. `Worker Nodes` sind die Slave Nodes. Sie führen die Tasks aus und liefern das Ergebnis zurück an den `Spark Context`.
